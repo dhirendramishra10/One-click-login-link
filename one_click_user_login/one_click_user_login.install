@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * @file
+ *   Webform module install/schema hooks.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function one_click_user_login_schema() {
+  $schema = array();
+
+  $schema['ocul'] = array(
+    'description' => 'Table for storing mapping for users respective encryption key',
+    'fields' => array(
+      'userid' => array(
+        'description' => 'User id.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'ignore_value' => array(
+        'description' => 'ignore string length',
+        'type' => 'int',
+      ),
+      'encrypt_key' => array(
+        'description' => 'random key to encrypt',
+        'type' => 'int',
+      ),
+      'on_off_flag' => array(
+        'description' => 'flag to indicate wheather user wants to generate and login with one click login link. 1 = YES, 0 = NO',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('userid'),
+  );
+
+  return $schema;
+}

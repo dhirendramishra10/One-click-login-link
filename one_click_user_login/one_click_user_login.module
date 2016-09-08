@@ -1,0 +1,127 @@
+<?php
+
+/**
+ * @file
+ * This module provides a simple option to each user to 
+ * generate the one click login link.
+ * 
+ * 
+ * @author Dhirendra Mishra <dhirenmishra10@gmail.com>
+ */
+/**
+ * Constants used in conditional logic.
+ */
+define('User_Login_Link', 'user-login-module');
+define('Rand_Str_Length', 10);
+
+/**
+ * Implements hook_menu().
+ */
+function one_click_user_login_menu() {
+  $items = array();
+  // Submissions listing.
+  $items['user/%/generate-login-link'] = array(
+    'title' => 'Generate Login Link',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('one_click_user_login_user_settings', 1),
+    'access callback' => 'user_access',
+    'access arguments' => array('generate login link'),
+    'description' => 'Generate and resend one Click login link.',
+    'file' => 'includes/one_click_user_login.admin.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  $items[User_Login_Link] = array(
+    'title' => 'User Login Link',
+    'page callback' => 'one_click_user_login_callback',
+    'access callback' => TRUE,
+    'file' => 'includes/one_click_user_login.login.inc',
+      //'type ' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_perm().
+ */
+function one_click_user_login_permission() {
+  return array(
+    'generate login link' => array(
+      'title' => t('Generate One Click Login Link'),
+      'description' => t('Grants access user role to generate one click login link for their account. Ideally should be given to Anonymous Role'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_mail
+ * @param type $key
+ * @param type $message
+ * @param type $params
+ */
+function one_click_user_login_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'send_login_url':
+      $message['subject'] = $params['subject'];
+      $message['body'][] = t($params['body']);
+      break;
+  }
+}
+
+/**
+ * Returns the user details from ocul table using logged in user id
+ * @return type
+ */
+function one_click_user_login_get_ocul_user_details($userid) {
+
+  $res = array();
+  if (empty($userid)) {
+    $userid = $GLOBALS['user']->uid;
+  }
+
+  if (!empty($userid)) {
+    $query = db_select('ocul', 'o');
+    $query->fields('o');
+    $query->condition('o.userid', $userid);
+    $res = $query->execute()->fetch(PDO::FETCH_ASSOC);
+  }
+
+  return $res;
+}
+
+/**
+ * Returns generated one click login link for given userid
+ * @param type $userid
+ * @param type $ignore_value
+ * @param type $encrypt_key
+ * @return string
+ */
+function _generate_one_click_user_login_link($userid, $ignore_value, $encrypt_key) {
+  $res = '';
+
+  if (!empty($userid) && is_numeric($userid) && !empty($ignore_value) && is_numeric($ignore_value) && !empty($encrypt_key) && is_numeric($encrypt_key)) {
+    // generate link logic here
+    $id1 = generateRandomString() . $userid;
+
+    $rand_str = generateRandomString($ignore_value);
+    $id2 = $rand_str . md5($id1 . $encrypt_key);
+    $res = User_Login_Link . '?id1=' . $id1 . '&id2=' . $id2;
+  }
+  return $res;
+}
+
+/**
+ * Generate random string with given length
+ * @param type $length
+ * @return string
+ */
+function generateRandomString($length = Rand_Str_Length) {
+  $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  $characters_length = strlen($characters);
+  $random_string = '';
+  for ($i = 0; $i < $length; $i++) {
+    $random_string .= $characters[rand(0, $characters_length - 1)];
+  }
+  return $random_string;
+}

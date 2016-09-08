@@ -1,0 +1,5 @@
+
+name = One click Login Link
+description = This module provide option to user to Generate One click Login Link on your Drupal site.
+core = 7.x
+package = Other
